@@ -41,23 +41,61 @@ function initMap() {
         return;
     }
     
-    mapInstance = new AMap.Map('mapContainer', {
-        zoom: 16,
-        center: [117.2365, 31.8635],
-        resizeEnable: true,
-        mapStyle: 'amap://styles/normal'
-    });
+    try {
+        mapInstance = new AMap.Map('mapContainer', {
+            zoom: 16,
+            center: [117.2365, 31.8635],
+            resizeEnable: true,
+            mapStyle: 'amap://styles/normal'
+        });
+        
+        mapInstance.on('complete', function() {
+            console.log('地图加载完成');
+            initMapControls();
+            addManualSearchBox();
+            getUserLocation();
+        });
+        
+        mapInstance.on('error', function(e) {
+            console.error('地图加载错误:', e);
+            showToast('地图加载失败，请刷新页面重试', 'error');
+            loadExpressPoints();
+            loadOrdersOnMap();
+        });
+        
+        setTimeout(function() {
+            if (!mapInstance || !mapInstance.getCenter()) {
+                console.warn('地图初始化超时，尝试重新初始化');
+                initMapFallback();
+            }
+        }, 10000);
+        
+    } catch (error) {
+        console.error('地图初始化异常:', error);
+        initMapFallback();
+    }
+}
+
+// 初始化地图控件
+function initMapControls() {
+    if (!mapInstance) return;
     
     AMap.plugin(['AMap.Scale', 'AMap.ToolBar', 'AMap.MapType'], function() {
-        mapInstance.addControl(new AMap.Scale());
-        mapInstance.addControl(new AMap.ToolBar());
-        mapInstance.addControl(new AMap.MapType());
+        try {
+            mapInstance.addControl(new AMap.Scale());
+            mapInstance.addControl(new AMap.ToolBar());
+            mapInstance.addControl(new AMap.MapType());
+        } catch (e) {
+            console.warn('添加控件失败:', e);
+        }
     });
-    
-    // 添加手动搜索定位框
-    addManualSearchBox();
-    
-    getUserLocation();
+}
+
+// 地图初始化失败时的降级方案
+function initMapFallback() {
+    showToast('地图服务暂时不可用，将显示静态位置', 'warning');
+    loadExpressPoints();
+    loadOrdersOnMap();
 }
 
 // 添加手动搜索定位框
