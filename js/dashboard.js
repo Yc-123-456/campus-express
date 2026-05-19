@@ -332,7 +332,7 @@ function getUserLocation() {
     AMap.plugin('AMap.Geolocation', function() {
         const geolocation = new AMap.Geolocation({
             enableHighAccuracy: isHTTPS,
-            timeout: isHTTPS ? 25000 : 10000,
+            timeout: isHTTPS ? 30000 : 10000,
             maximumAge: 0,
             convert: true,
             showButton: true,
@@ -346,27 +346,74 @@ function getUserLocation() {
         
         mapInstance.addControl(geolocation);
         
-        geolocation.getCurrentPosition(function(status, result) {
-            console.log('定位结果:', status, result);
+        let watcher = null;
+        let bestAccuracy = Infinity;
+        let initialPositionSet = false;
+        let timeoutTimer = null;
+        
+        const handlePosition = function(status, result) {
+            console.log('定位更新:', status, result);
             
-            if (status === 'complete') {
-                if (result && result.position) {
-                    const accuracy = result.accuracy || 0;
-                    console.log(`定位成功: 精度 ${accuracy} 米`);
-                    handleLocationSuccess(result);
-                } else {
-                    console.error('定位结果不完整:', result);
-                    showToast('定位结果异常，使用默认位置', 'warning');
-                    fallbackToDefaultLocation();
+            if (status === 'complete' && result && result.position) {
+                const accuracy = result.accuracy || 0;
+                console.log(`定位更新: 精度 ${accuracy} 米`);
+                
+                if (accuracy < bestAccuracy) {
+                    bestAccuracy = accuracy;
+                    
+                    if (!initialPositionSet) {
+                        handleLocationSuccess(result);
+                        initialPositionSet = true;
+                        loadExpressPoints();
+                        loadOrdersOnMap();
+                    } else if (accuracy < 50) {
+                        handleLocationSuccess(result);
+                        
+                        if (watcher) {
+                            geolocation.clearWatch(watcher);
+                            watcher = null;
+                            console.log('达到高精度要求，停止连续定位');
+                        }
+                    } else if (accuracy < 100) {
+                        handleLocationSuccess(result);
+                    }
                 }
-            } else {
+            } else if (status !== 'complete') {
+                if (watcher) {
+                    geolocation.clearWatch(watcher);
+                    watcher = null;
+                }
                 console.error('定位失败:', result);
-                handleLocationError(result);
+                if (!initialPositionSet) {
+                    handleLocationError(result);
+                    loadExpressPoints();
+                    loadOrdersOnMap();
+                }
             }
+        };
+        
+        if (isHTTPS) {
+            watcher = geolocation.watchPosition(handlePosition);
             
-            loadExpressPoints();
-            loadOrdersOnMap();
-        });
+            timeoutTimer = setTimeout(function() {
+                if (watcher) {
+                    geolocation.clearWatch(watcher);
+                    watcher = null;
+                    console.log('连续定位超时，停止监听');
+                    if (!initialPositionSet) {
+                        showToast('定位超时，使用当前位置', 'warning');
+                    }
+                }
+            }, 30000);
+        } else {
+            geolocation.getCurrentPosition(function(status, result) {
+                handlePosition(status, result);
+                if (!initialPositionSet) {
+                    loadExpressPoints();
+                    loadOrdersOnMap();
+                }
+            });
+        }
     });
 }
 
