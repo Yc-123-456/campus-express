@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单详情 - 校园快递代取</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 订单详情页紧凑样式 */
+        .order-detail-container {
+            margin-top: 1rem !important;
+        }
+        
+        .order-card {
+            margin-bottom: 1rem !important;
+        }
+        
+        .order-card .card-header {
+            padding: 0.5rem 1rem;
+        }
+        
+        .order-card .card-header h5 {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        
+        .order-card .card-body {
+            padding: 0.75rem 1rem;
+        }
+        
+        .order-card .row {
+            margin-bottom: 0.5rem;
+        }
+        
+        .order-card .row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .order-card h6 {
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .order-card p {
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        
+        .order-card hr {
+            margin: 0.5rem 0;
+        }
+        
+        .order-card .fs-5 {
+            font-size: 1rem !important;
+        }
+        
+        #actionCard {
+            margin-bottom: 1rem;
+        }
+        
+        #actionCard .card-body {
+            padding: 0.5rem;
+        }
+        
+        #actionCard .btn {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.html">校园快递代取</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">接单大厅</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="orders.html">我的订单</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="messages.html">
+                            我的消息
+                            <span class="badge bg-danger ms-1" id="navUnreadBadge" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.html">个人中心</a>
+                    </li>
+                    <li class="nav-item admin-only" style="display: none;">
+                        <a class="nav-link" href="admin.html">管理后台</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link">欢迎, <span id="userDisplayName"></span></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logoutBtn">退出登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container order-detail-container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <!-- 返回按钮 -->
+                <button class="btn btn-outline-secondary mb-2 btn-sm" onclick="history.back()">
+                    <i class="bi bi-arrow-left"></i> 返回
+                </button>
+
+                <!-- 订单信息卡片 -->
+                <div class="card order-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">订单详情</h5>
+                        <span class="badge" id="orderStatusBadge">待取件</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">订单号:</h6>
+                                <p id="orderId" class="text-muted mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">创建时间:</h6>
+                                <p id="createTime" class="text-muted mb-1">-</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">快递公司:</h6>
+                                <p id="expressCompany" class="mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">快递单号:</h6>
+                                <p id="trackingNumber" class="mb-1">-</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">取件码:</h6>
+                                <p id="pickupCode" class="text-primary fw-bold mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">取件地点:</h6>
+                                <p id="pickupLocation" class="mb-1">-</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="fw-bold">送达地址:</h6>
+                                <p id="deliveryAddress" class="mb-1">-</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">联系人:</h6>
+                                <p id="contactName" class="mb-1">-</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">联系电话:</h6>
+                                <p id="contactPhone" class="mb-1">-</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6 class="fw-bold">代取费用:</h6>
+                                <p id="fee" class="text-danger fw-bold mb-1">¥0.00</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="fw-bold">额外打赏:</h6>
+                                <p id="reward" class="text-success mb-1">¥0.00</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="fw-bold">总计:</h6>
+                                <p id="totalFee" class="text-danger fw-bold mb-1">¥0.00</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="fw-bold">备注:</h6>
+                                <p id="remark" class="text-muted mb-0">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮区域 -->
+                <div class="card" id="actionCard">
+                    <div class="card-body text-center">
+                        <button class="btn btn-warning me-2" id="acceptOrderBtn" style="display: none;">接单</button>
+                        <button class="btn btn-success me-2" id="completeOrderBtn" style="display: none;">确认完成</button>
+                        <button class="btn btn-danger me-2" id="cancelOrderBtn" style="display: none;">取消订单</button>
+                        <button class="btn btn-primary" id="contactBtn">联系发布者</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系信息模态框 -->
+    <div class="modal fade" id="contactModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contactModalTitle">联系信息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>姓名：</strong><span id="modalContactName"></span></p>
+                    <p><strong>联系电话：</strong><span id="modalContactPhone"></span></p>
+                    <p id="modalRoleInfo" class="text-muted small"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <a id="callPhoneBtn" href="#" class="btn btn-primary">拨打电话</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/order_detail.js"></script>
+</body>
+</html>
