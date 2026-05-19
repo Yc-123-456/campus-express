@@ -290,43 +290,76 @@ function getUserLocation() {
     }
     
     AMap.plugin('AMap.Geolocation', function() {
+        const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+        
         const geolocation = new AMap.Geolocation({
-            enableHighAccuracy: true,
-            timeout: 15000,
+            enableHighAccuracy: isHTTPS,
+            timeout: isHTTPS ? 20000 : 10000,
             maximumAge: 0,
             convert: true,
             showButton: true,
             buttonPosition: 'RB',
             buttonOffset: new AMap.Pixel(10, 10),
-            showMarker: false,
-            showCircle: false,
+            showMarker: true,
+            showCircle: isHTTPS,
             panToLocation: true,
             zoomToAccuracy: true
         });
         
         mapInstance.addControl(geolocation);
         
-        geolocation.getCurrentPosition(function(status, result) {
+        let locationWatcher = null;
+        
+        const handlePosition = function(status, result) {
             if (status === 'complete') {
+                const accuracy = result.accuracy || 0;
                 handleLocationSuccess(result);
+                
+                if (isHTTPS && locationWatcher && accuracy < 50) {
+                    geolocation.clearWatch(locationWatcher);
+                    locationWatcher = null;
+                }
             } else {
                 handleLocationError(result);
+                if (locationWatcher) {
+                    geolocation.clearWatch(locationWatcher);
+                    locationWatcher = null;
+                }
             }
             
-            loadExpressPoints();
-            loadOrdersOnMap();
-        });
+            if (!locationWatcher) {
+                loadExpressPoints();
+                loadOrdersOnMap();
+            }
+        };
+        
+        if (isHTTPS) {
+            locationWatcher = geolocation.watchPosition(handlePosition);
+        } else {
+            geolocation.getCurrentPosition(handlePosition);
+        }
     });
 }
 
 // 定位成功处理
 function handleLocationSuccess(result) {
     const lnglat = result.position;
+    const accuracy = result.accuracy || 0;
     
-    // 添加可拖拽的用户标记
     addDraggableMarker(lnglat, '我的位置');
     
-    showToast('定位成功，可拖拽标记调整位置', 'success');
+    let accuracyText = '';
+    if (accuracy > 0) {
+        if (accuracy < 50) {
+            accuracyText = `（精度：约${Math.round(accuracy)}米，高精度）`;
+        } else if (accuracy < 200) {
+            accuracyText = `（精度：约${Math.round(accuracy)}米）`;
+        } else {
+            accuracyText = `（精度：约${Math.round(accuracy)}米，建议移动到开阔区域）`;
+        }
+    }
+    
+    showToast(`定位成功${accuracyText}，可拖拽标记调整位置`, 'success');
 }
 
 // 定位失败处理

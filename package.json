@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "校园快递代取系统",
   "scripts": {
-    "build": "mkdir -p dist && xcopy /E /Y .\\* .\\dist\\",
     "dev": "python -m http.server 8000"
   },
   "dependencies": {},

@@ -5,3 +5,7 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
+server.py
+server.crt
+server.key
+dist/
