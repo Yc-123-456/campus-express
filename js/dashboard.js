@@ -583,9 +583,13 @@ function viewOrdersAtPoint(pointName) {
 function refreshMap() {
     if (mapInstance) {
         mapInstance.destroy();
+        mapInstance = null;
+        userMarker = null;
+        userCircle = null;
     }
+    
+    showToast('正在重新定位...', 'info');
     initMap();
-    showToast('地图已刷新', 'success');
 }
 
 // ==================== 订单列表功能 ====================
