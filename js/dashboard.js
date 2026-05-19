@@ -323,60 +323,59 @@ function getUserLocation() {
         return;
     }
     
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+    
+    if (!isHTTPS) {
         showToast('当前网站未使用HTTPS，可能无法获取高精度位置', 'info');
     }
     
     AMap.plugin('AMap.Geolocation', function() {
-        const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
-        
         const geolocation = new AMap.Geolocation({
             enableHighAccuracy: isHTTPS,
-            timeout: isHTTPS ? 20000 : 10000,
+            timeout: isHTTPS ? 25000 : 10000,
             maximumAge: 0,
             convert: true,
             showButton: true,
             buttonPosition: 'RB',
             buttonOffset: new AMap.Pixel(10, 10),
             showMarker: true,
-            showCircle: isHTTPS,
+            showCircle: true,
             panToLocation: true,
             zoomToAccuracy: true
         });
         
         mapInstance.addControl(geolocation);
         
-        let locationWatcher = null;
-        
-        const handlePosition = function(status, result) {
+        geolocation.getCurrentPosition(function(status, result) {
+            console.log('定位结果:', status, result);
+            
             if (status === 'complete') {
-                const accuracy = result.accuracy || 0;
-                handleLocationSuccess(result);
-                
-                if (isHTTPS && locationWatcher && accuracy < 50) {
-                    geolocation.clearWatch(locationWatcher);
-                    locationWatcher = null;
+                if (result && result.position) {
+                    const accuracy = result.accuracy || 0;
+                    console.log(`定位成功: 精度 ${accuracy} 米`);
+                    handleLocationSuccess(result);
+                } else {
+                    console.error('定位结果不完整:', result);
+                    showToast('定位结果异常，使用默认位置', 'warning');
+                    fallbackToDefaultLocation();
                 }
             } else {
+                console.error('定位失败:', result);
                 handleLocationError(result);
-                if (locationWatcher) {
-                    geolocation.clearWatch(locationWatcher);
-                    locationWatcher = null;
-                }
             }
             
-            if (!locationWatcher) {
-                loadExpressPoints();
-                loadOrdersOnMap();
-            }
-        };
-        
-        if (isHTTPS) {
-            locationWatcher = geolocation.watchPosition(handlePosition);
-        } else {
-            geolocation.getCurrentPosition(handlePosition);
-        }
+            loadExpressPoints();
+            loadOrdersOnMap();
+        });
     });
+}
+
+// 使用默认位置
+function fallbackToDefaultLocation() {
+    const defaultLocation = [117.2365, 31.8635];
+    mapInstance.setCenter(defaultLocation);
+    addDraggableMarker(defaultLocation, '当前位置');
+    showToast('无法获取当前位置，已定位到默认位置', 'info');
 }
 
 // 定位成功处理
