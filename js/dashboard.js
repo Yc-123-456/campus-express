@@ -41,6 +41,8 @@ function initMap() {
         return;
     }
     
+    console.log('=== 开始初始化地图 ===');
+    
     try {
         mapInstance = new AMap.Map('mapContainer', {
             zoom: 16,
@@ -50,7 +52,7 @@ function initMap() {
         });
         
         mapInstance.on('complete', function() {
-            console.log('地图加载完成');
+            console.log('地图加载完成，开始获取用户位置');
             initMapControls();
             addManualSearchBox();
             getUserLocation();
@@ -635,8 +637,14 @@ function refreshMap() {
         userCircle = null;
     }
     
-    showToast('正在重新定位...', 'info');
-    initMap();
+    const mapContainer = document.getElementById('mapContainer');
+    if (mapContainer) {
+        mapContainer.innerHTML = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #666;">正在重新定位...</div>';
+    }
+    
+    setTimeout(function() {
+        initMap();
+    }, 500);
 }
 
 // ==================== 订单列表功能 ====================
