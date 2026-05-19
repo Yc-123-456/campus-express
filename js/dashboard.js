@@ -231,23 +231,23 @@ function searchAndLocate() {
 
 // 降级方案：城市搜索
 function fallbackToCitySearch(keyword) {
-    AMap.plugin('AMap.CitySearch', function() {
-        const citySearch = new AMap.CitySearch();
+    AMap.plugin('AMap.Geocoder', function() {
+        const geocoder = new AMap.Geocoder({
+            city: '全国'
+        });
         
-        // 尝试搜索城市
-        citySearch.search(keyword, function(status, result) {
+        geocoder.getLocation(keyword, function(status, result) {
             console.log('城市搜索结果:', status, result);
             
-            if (status === 'complete' && result.cityList && result.cityList.length > 0) {
-                const city = result.cityList[0];
-                const center = city.bounds.getCenter();
-                mapInstance.setCenter(center);
+            if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
+                const location = result.geocodes[0].location;
+                mapInstance.setCenter(location);
                 mapInstance.setZoom(12);
                 
-                addDraggableMarker(center, city.cityName);
-                showToast(`已定位到城市: ${city.cityName}`, 'success');
+                addDraggableMarker(location, keyword);
+                showToast(`已定位到: ${keyword}`, 'success');
             } else {
-                // 最后降级到IP定位
+                // 降级到IP定位
                 console.error('城市搜索也失败，使用IP定位');
                 fallbackToIPLocation();
             }
